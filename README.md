@@ -1,163 +1,196 @@
 # Clickbait Classification
 
-This repository fine-tunes transformer models (BERT, DistilBERT, RoBERTa) and trains traditional ML baselines (Logistic Regression, Random Forest) to classify whether a news headline is *clickbait* or not.
-
-## Data Structure
-
-The dataset is from <https://www.kaggle.com/datasets/vikassingh1996/news-clickbait-dataset> The dataset is structured with two columns:
-
-| headline | clickbait |
-|-----------|------------|
-| `"Jurassic World" uses bad science - Business Insider` | 1 |
-| `"Bring it on": Students sue Trump administration over climate change` | 0 |
+This project fine-tunes transformer models and trains classical ML baselines to classify whether a news headline is **clickbait** or not.
 
 ---
 
-## Environment Setup
+## Project Structure
 
-### Prerequistes
-
-- Git
-- Miniconda
-- Weight & Biases acoount
-
-### Installation
-
-```shell
-git clone https://github.com/samuellee77/clickbait-classification.git
-cd clickbait-classification
+```txt
+clickbait-classification/
+│
+├── main.py             # entry point with argument parser
+├── dataset.py          # text cleaning and dataset loading utilities
+├── baseline.py         # classical baselines (TF-IDF + Logistic Regression / Random Forest)
+├── transformer.py      # transformer training (BERT / DistilBERT / RoBERTa)
+├── data.csv            # your dataset (headline, clickbait)
+└── README.md           # you are here
 ```
 
-Create the environment:
+---
 
-```shell
-conda env create -f environment.yml
-conda activate clickbait-nlp
-```
+## Data Format
+
+The dataset must be a **CSV** file with at least two columns:
+
+| headline                                               | clickbait |
+| ------------------------------------------------------ | --------- |
+| `"Jurassic World" uses bad science - Business Insider` | 1         |
+| `"Apprentice" contestant sues Trump for defamation`    | 0         |
+
+* **headline** → string title
+* **clickbait** → `1` for clickbait, `0` otherwise
+
+---
+
+## Preprocessing
+
+Implemented in **dataset.py**
+
+* Lowercase conversion
+* Removes digits and most punctuation
+* Keeps `!` and `?` because they are strong clickbait cues
+* Cleans repeated whitespace
+
+---
+
+## Models
+
+### Transformer Models (in `transformer.py`)
+
+Fine-tune pretrained models from the Hugging Face library:
+
+* `bert-base-uncased`
+* `distilbert-base-uncased`
+* `roberta-base`
+
+Uses binary classification head (`num_labels=2`) trained with:
+
+* **Loss:** Binary cross-entropy
+* **Optimizer:** AdamW
+* **Scheduler:** configurable (linear, cosine, etc.)
+* **Evaluation:** Accuracy, Precision, Recall, F1
+
+All training progress and metrics can be logged to **Weights & Biases (W&B)**.
+
+### Baselines (in `baseline.py`)
+
+Classical models trained on TF-IDF features:
+
+* **Logistic Regression** (`--baseline_model lr`)
+* **Random Forest** (`--baseline_model rf`)
+
+Evaluated on accuracy, precision, recall, and F1.
 
 ---
 
 ## Running Experiments
 
-All experiments are launched with the same script:
+### Transformers
+
+#### Example: DistilBERT (fine-tuning)
 
 ```bash
-python train_clickbait.py --data path/to/data.csv --model_type <type> [options]
+python main.py \
+  --data data.csv \
+  --model_type distilbert \
+  --epochs 3 \
+  --lr 3e-5 \
+  --batch_size 32 \
+  --wandb_project clickbait-exp \
+  --wandb_run_name "DistilBERT" \
+  --n_rows 1000
 ```
 
-### Supported Model Types
-
-| Model Type   | Description                                   |
-| ------------ | --------------------------------------------- |
-| `baseline`   | TF-IDF + Logistic Regression or Random Forest |
-| `bert`       | Fine-tune BERT-base-uncased                   |
-| `distilbert` | Fine-tune DistilBERT-base-uncased             |
-| `roberta`    | Fine-tune RoBERTa-base                        |
-
----
-
-## Example Commands
-
-### 1. Baseline: Logistic Regression
+#### Example: RoBERTa
 
 ```bash
-python train_clickbait.py --data data.csv --model_type baseline --baseline_model lr
-```
-
-### 2. Baseline: Random Forest
-
-```bash
-python train_clickbait.py --data data.csv --model_type baseline --baseline_model rf
-```
-
-### 3. Transformer: BERT-base
-
-```bash
-python train_clickbait.py --data data.csv --model_type bert --epochs 3 \
-  --wandb_project <your project name> --wandb_run_name "BERT-base"
-```
-
-### 4. Transformer: DistilBERT
-
-```bash
-python train_clickbait.py --data data.csv --model_type distilbert \
-  --epochs 3 --lr 3e-5 --batch_size 32 \
-  --wandb_project <your project name> --wandb_run_name "DistilBERT"
-```
-
-### 5. Transformer: RoBERTa-base
-
-```bash
-python train_clickbait.py --data data.csv --model_type roberta \
-  --epochs 4 --lr 2e-5 --batch_size 16 \
-  --wandb_project <your project name> --wandb_run_name "RoBERTa-base"
+python main.py \
+  --data data.csv \
+  --model_type roberta \
+  --epochs 4 \
+  --lr 2e-5 \
+  --batch_size 16 \
+  --wandb_project clickbait-exp \
+  --wandb_run_name "RoBERTa"
 ```
 
 ---
 
-## W&B (Weights & Biases) Logging
+### Baseline Models
 
-You can track metrics (train/val loss, accuracy, precision, recall, F1, etc.) on [wandb.ai](https://wandb.ai/).
-
-To enable logging:
+#### Logistic Regression
 
 ```bash
-python train_clickbait.py --data data.csv --model_type bert \
-  --wandb_project clickbait-exp --wandb_entity your_username \
-  --wandb_run_name "bert-run-1"
+python main.py \
+  --data data.csv \
+  --model_type baseline \
+  --baseline_model lr \
+  --wandb_project clickbait-exp \
+  --wandb_run_name "LR-baseline"
 ```
 
-If you don’t want to log to W&B:
+#### Random Forest
 
 ```bash
---wandb_disabled
+python main.py \
+  --data data.csv \
+  --model_type baseline \
+  --baseline_model rf \
+  --wandb_project clickbait-exp \
+  --wandb_run_name "RF-baseline"
 ```
-
-W&B logs include:
-
-- `train/loss`, `val/loss`
-- `val/accuracy`, `val/precision`, `val/recall`, `val/f1`
-- `test/accuracy`, `test/confusion_matrix`
 
 ---
 
 ## Arguments Overview
 
-| Argument           | Type  | Default             | Description                                        |
-| ------------------ | ----- | ------------------- | -------------------------------------------------- |
-| `--data`           | str   | **Required**        | Path to dataset CSV file                           |
-| `--text_col`       | str   | `headline`          | Column name for text input                         |
-| `--label_col`      | str   | `clickbait`         | Column name for label                              |
-| `--model_type`     | str   | **Required**        | One of `baseline`, `bert`, `distilbert`, `roberta` |
-| `--pretrained`     | str   | `bert-base-uncased` | Hugging Face model checkpoint                      |
-| `--baseline_model` | str   | `lr`                | For baseline runs: `lr` or `rf`                    |
-| `--epochs`         | int   | `3`                 | Number of training epochs                          |
-| `--batch_size`     | int   | `16`                | Batch size per device                              |
-| `--lr`             | float | `2e-5`              | Learning rate                                      |
-| `--max_length`     | int   | `128`               | Max token length per headline                      |
-| `--train_frac`     | float | `0.8`               | Fraction of training data                          |
-| `--val_frac`       | float | `0.1`               | Fraction of validation data                        |
-| `--test_frac`      | float | `0.1`               | Fraction of test data                              |
-| `--output_dir`     | str   | `./outputs`         | Directory for model checkpoints and logs           |
-| `--seed`           | int   | `42`                | Random seed for reproducibility                    |
-| `--warmup_ratio`   | float | `0.06`              | Warmup fraction for learning rate scheduler        |
-| `--lr_scheduler`   | str   | `linear`            | Scheduler type (`linear`, `cosine`, etc.)          |
-| `--wandb_project`  | str   | None                | W&B project name                                   |
-| `--wandb_entity`   | str   | None                | W&B username or team                               |
-| `--wandb_run_name` | str   | None                | Custom run name on W&B                             |
-| `--wandb_disabled` | flag  | False               | Disable W&B logging                                |
+| Argument           | Description                                             | Default                     |
+| ------------------ | ------------------------------------------------------- | --------------------------- |
+| `--data`           | Path to dataset CSV                                     | **Required**                |
+| `--text_col`       | Name of text column                                     | `headline`                  |
+| `--label_col`      | Name of label column                                    | `clickbait`                 |
+| `--train_frac`     | Fraction for training set                               | `0.8`                       |
+| `--val_frac`       | Fraction for validation set                             | `0.1`                       |
+| `--test_frac`      | Fraction for test set                                   | `0.1`                       |
+| `--seed`           | Random seed                                             | `42`                        |
+| `--output_dir`     | Output directory for checkpoints                        | `./outputs`                 |
+| `--n_rows`         | Use only first *N* rows for debugging                   | `None`                      |
+| `--model_type`     | `bert`, `distilbert`, `roberta`, `baseline`             | **Required**                |
+| `--pretrained`     | Pretrained checkpoint name                              | auto-selected by model type |
+| `--batch_size`     | Batch size                                              | `16`                        |
+| `--epochs`         | Number of epochs                                        | `3`                         |
+| `--lr`             | Learning rate                                           | `2e-5`                      |
+| `--warmup_ratio`   | Warmup ratio for scheduler                              | `0.06`                      |
+| `--lr_scheduler`   | Scheduler type (`linear`, `cosine`, `polynomial`, etc.) | `linear`                    |
+| `--baseline_model` | `lr` (LogReg) or `rf` (RandomForest)                    | `lr`                        |
+| `--wandb_project`  | W&B project name (optional)                             | `None`                      |
+| `--wandb_entity`   | W&B entity / team name                                  | `None`                      |
+| `--wandb_run_name` | W&B run name                                            | `None`                      |
+| `--wandb_disabled` | Disable W&B logging                                     | `False`                     |
 
 ---
 
-## Outputs
+## Weights & Biases Integration
 
-After each run, you’ll get:
+* Runs automatically call `wandb.init()` if a project name is given.
+* Logs include:
 
-- **Console summary**:
+  * **Train:** loss, accuracy, precision, recall, F1
+  * **Eval:** loss, accuracy, precision, recall, F1
+  * **Test:** loss, accuracy, precision, recall, F1
+* Confusion matrices and PR curves are logged for test results.
 
-  ```shell
-  [Transformer] VAL: {'eval_loss': 0.524, 'eval_accuracy': 0.873, 'eval_f1': 0.861}
-  [Transformer] TEST: {'eval_loss': 0.511, 'eval_accuracy': 0.880, 'eval_f1': 0.870}
-  ```
+> If you don’t want to use W&B, add `--wandb_disabled`.
 
-- **W&B dashboard** with training curves and confusion matrices
+---
+
+## Development Notes
+
+* Uses `AutoTokenizer` and `AutoModelForSequenceClassification`.
+* Custom callback logs per-epoch train + validation metrics.
+* TF-IDF baselines use bigrams `(1,2)` and balanced class weights.
+* Works with small subsets via `--n_rows` for quick tests.
+
+---
+
+## Example Output
+
+```txt
+Splits → train:800  val:100  test:100
+{'epoch': 1.0, 'train/loss': 0.34, 'train/accuracy': 0.87, 'train/f1': 0.88}
+{'epoch': 1.0, 'val/loss': 0.43, 'val/accuracy': 0.78, 'val/f1': 0.78}
+...
+[Transformer] TEST:
+{'test_loss': 0.31, 'test_accuracy': 0.89, 'test_f1': 0.90}
+```
