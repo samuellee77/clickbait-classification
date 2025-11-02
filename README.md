@@ -15,6 +15,14 @@ The dataset is from <https://www.kaggle.com/datasets/vikassingh1996/news-clickba
 
 ## Environment Setup
 
+### Prerequistes
+
+- Git
+- Miniconda
+- Weight & Biases acoount
+
+### Installation
+
 ```shell
 git clone https://github.com/samuellee77/clickbait-classification.git
 cd clickbait-classification
@@ -37,7 +45,7 @@ All experiments are launched with the same script:
 python train_clickbait.py --data path/to/data.csv --model_type <type> [options]
 ```
 
-### 🧩 Supported Model Types
+### Supported Model Types
 
 | Model Type   | Description                                   |
 | ------------ | --------------------------------------------- |
@@ -66,7 +74,7 @@ python train_clickbait.py --data data.csv --model_type baseline --baseline_model
 
 ```bash
 python train_clickbait.py --data data.csv --model_type bert --epochs 3 \
-  --wandb_project clickbait-exp --wandb_run_name "BERT-base"
+  --wandb_project <your project name> --wandb_run_name "BERT-base"
 ```
 
 ### 4. Transformer: DistilBERT
@@ -74,7 +82,7 @@ python train_clickbait.py --data data.csv --model_type bert --epochs 3 \
 ```bash
 python train_clickbait.py --data data.csv --model_type distilbert \
   --epochs 3 --lr 3e-5 --batch_size 32 \
-  --wandb_project clickbait-exp --wandb_run_name "DistilBERT"
+  --wandb_project <your project name> --wandb_run_name "DistilBERT"
 ```
 
 ### 5. Transformer: RoBERTa-base
@@ -82,7 +90,7 @@ python train_clickbait.py --data data.csv --model_type distilbert \
 ```bash
 python train_clickbait.py --data data.csv --model_type roberta \
   --epochs 4 --lr 2e-5 --batch_size 16 \
-  --wandb_project clickbait-exp --wandb_run_name "RoBERTa-base"
+  --wandb_project <your project name> --wandb_run_name "RoBERTa-base"
 ```
 
 ---
@@ -107,9 +115,9 @@ If you don’t want to log to W&B:
 
 W&B logs include:
 
-* `train/loss`, `val/loss`
-* `val/accuracy`, `val/precision`, `val/recall`, `val/f1`
-* `test/accuracy`, `test/confusion_matrix`
+- `train/loss`, `val/loss`
+- `val/accuracy`, `val/precision`, `val/recall`, `val/f1`
+- `test/accuracy`, `test/confusion_matrix`
 
 ---
 
@@ -145,13 +153,11 @@ W&B logs include:
 
 After each run, you’ll get:
 
-* **Console summary**:
+- **Console summary**:
 
   ```shell
   [Transformer] VAL: {'eval_loss': 0.524, 'eval_accuracy': 0.873, 'eval_f1': 0.861}
   [Transformer] TEST: {'eval_loss': 0.511, 'eval_accuracy': 0.880, 'eval_f1': 0.870}
   ```
 
-* **W&B dashboard** with training curves and confusion matrices
-
----
+- **W&B dashboard** with training curves and confusion matrices
