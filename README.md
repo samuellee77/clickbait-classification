@@ -16,7 +16,18 @@ clickbait-classification/
 ├── data.csv            # your dataset (headline, clickbait)
 └── README.md           # you are here
 ```
+## Create Environment
 
+```shell
+git clone https://github.com/samuellee77/clickbait-classification.git
+cd clickbait-classification
+conda env create -f environment.yml
+```
+After the environment is installed, run:
+
+```shell
+conda activate clickbait-nlp
+```
 ---
 
 ## Data Format

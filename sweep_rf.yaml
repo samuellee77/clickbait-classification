@@ -1,0 +1,21 @@
+program: main.py
+method: grid
+metric: {name: val/f1, goal: maximize}
+parameters:
+  data:           {value: data.csv}
+  model_type:     {value: baseline}
+  baseline_model: {value: rf}
+
+  # TF-IDF
+  tfidf_ngram_max:    {values: [1, 2]}
+  tfidf_min_df:       {values: [1, 2, 5]}
+  tfidf_max_df:       {values: [0.85, 0.9, 0.95]}
+
+  # RF
+  rf_estimators:        {values: [200, 400, 800]}
+  rf_max_depth:         {values: [None, 20, 40]}
+  rf_min_samples_split: {values: [2, 5]}
+
+  # misc
+  n_rows:        {value: 2000}
+  wandb_project: {value: clickbait-classification}

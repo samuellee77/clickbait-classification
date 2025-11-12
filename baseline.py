@@ -4,6 +4,7 @@ import time
 import os
 import wandb
 import numpy as np
+import joblib
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -25,9 +26,13 @@ def run_baseline(df, args):
     # --- vectorizer ---
     vec = TfidfVectorizer(
         preprocessor=clean_text_keep_bang_qmark,
-        ngram_range=(1,2),
-        min_df=2, max_df=0.9, strip_accents="unicode",
-        token_pattern=r"(?u)\b\w+\b|[!?]"  # keep ! and ? as standalone tokens
+        ngram_range=(1, args.tfidf_ngram_max),
+        min_df=args.tfidf_min_df,
+        max_df=args.tfidf_max_df,
+        strip_accents="unicode",
+        sublinear_tf=args.tfidf_sublinear_tf,
+        use_idf=args.tfidf_use_idf,
+        token_pattern=r"(?u)\b\w+\b|[!?]"   # keep ! and ? as tokens
     )
     Xtr = vec.fit_transform(train_df[args.text_col])
     Xva = vec.transform(val_df[args.text_col])
@@ -38,9 +43,28 @@ def run_baseline(df, args):
 
     # --- model ---
     if args.baseline_model == "lr":
-        clf = LogisticRegression(max_iter=1000, class_weight="balanced", n_jobs=None, solver="lbfgs", verbose=0)
+        clf = LogisticRegression(
+            C=args.lr_C,
+            penalty=args.lr_penalty,
+            max_iter=args.lr_max_iter,
+            class_weight="balanced",
+            solver="lbfgs",
+            n_jobs=None,
+            verbose=0,
+        )
     else:
-        clf = RandomForestClassifier(n_estimators=400, class_weight="balanced", random_state=args.seed, n_jobs=-1, verbose=0)
+        clf = RandomForestClassifier(
+            n_estimators=args.rf_estimators,
+            max_depth=args.rf_max_depth,
+            min_samples_split=args.rf_min_samples_split,
+            min_samples_leaf=args.rf_min_samples_leaf,
+            max_features=(None if args.rf_max_features == "None" else args.rf_max_features),
+            class_weight="balanced",
+            random_state=args.seed,
+            n_jobs=-1,
+            verbose=0,
+        )
+
 
     # --- W&B init (only if enabled) ---
     wandb_run = None
@@ -90,5 +114,9 @@ def run_baseline(df, args):
                     )
                 })
 
+    os.makedirs(args.output_dir, exist_ok=True)
+    joblib.dump(vec, os.path.join(args.output_dir, "tfidf.joblib"))
+    joblib.dump(clf, os.path.join(args.output_dir, f"{args.baseline_model}.joblib"))
+    print(f"Saved TF-IDF and model -> {args.output_dir}")
     if wandb_run is not None:
         wandb.finish()

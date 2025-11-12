@@ -1,0 +1,36 @@
+entity: hsl023-uc-san-diego
+project: clickbait-classification
+program: main.py
+method: grid
+
+metric:
+  name: eval/f1
+  goal: maximize
+
+parameters:
+  data:
+    value: data.csv
+
+  model_type:
+    value: bert
+
+  lr:
+    values: [1e-5, 2e-5, 3e-5, 5e-5]
+
+  batch_size:
+    values: [16, 32]
+
+  epochs:
+    value: 3
+
+  max_length:
+    values: [96, 128]
+
+  warmup_ratio:
+    values: [0.0, 0.06]
+
+  n_rows:
+    value: 2000
+
+  wandb_project:
+    value: clickbait-classification

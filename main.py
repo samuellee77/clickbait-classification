@@ -8,6 +8,13 @@ from dataset import load_csv_safely
 from baseline import run_baseline
 from transformer import run_transformer
 
+def optional_int(x: str):
+    x = str(x).strip().lower()
+    if x in {"none", "null", "nil", "" , "nan"}:
+        return None
+    v = int(x)
+    return v
+
 def parse_args():
     ap = argparse.ArgumentParser("Clickbait training pipeline (HF + baselines)")
 
@@ -41,6 +48,21 @@ def parse_args():
 
     # Baseline options
     ap.add_argument("--baseline_model", choices=["lr","rf"], default="lr")
+    ap.add_argument("--tfidf_min_df", type=int, default=2)
+    ap.add_argument("--tfidf_max_df", type=float, default=0.9)
+    ap.add_argument("--tfidf_ngram_max", type=int, default=2)  # ngram_range=(1, tfidf_ngram_max)
+    ap.add_argument("--tfidf_sublinear_tf", action="store_true")
+    ap.add_argument("--tfidf_use_idf", action="store_true")
+
+    ap.add_argument("--lr_C", type=float, default=1.0)
+    ap.add_argument("--lr_penalty", choices=["l2"], default="l2")
+    ap.add_argument("--lr_max_iter", type=int, default=1000)
+
+    ap.add_argument("--rf_estimators", type=int, default=400)
+    ap.add_argument("--rf_max_depth", type=optional_int, default=None)
+    ap.add_argument("--rf_min_samples_split", type=int, default=2)
+    ap.add_argument("--rf_min_samples_leaf", type=int, default=1)
+    ap.add_argument("--rf_max_features", type=str, default="sqrt")
 
     # W&B
     ap.add_argument("--wandb_project", type=str, default=None)
