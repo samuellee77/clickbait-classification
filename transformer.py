@@ -39,6 +39,15 @@ def compute_metrics(eval_pred):
 
 # ---- Main entry for transformer training ----
 def run_transformer(df, args):
+
+    if torch.cuda.is_available():
+        device = "cuda"
+    elif torch.backends.mps.is_available():
+        device = "mps"
+    else:
+        device = "cpu"
+
+    print("Using device:", device)
     tok = AutoTokenizer.from_pretrained(args.pretrained, use_fast=True)
 
     # Clean
@@ -96,7 +105,8 @@ def run_transformer(df, args):
         greater_is_better=True,
         fp16=torch.cuda.is_available(),
         seed=args.seed,
-        report_to="wandb"
+        report_to="wandb",
+        no_cuda=(device != "cuda")
     )
 
     trainer = Trainer(
@@ -108,6 +118,8 @@ def run_transformer(df, args):
         data_collator=collator,
         compute_metrics=compute_metrics
     )
+    if device == "mps":
+        trainer.model.to("mps")
 
     # Train
     trainer.train()
